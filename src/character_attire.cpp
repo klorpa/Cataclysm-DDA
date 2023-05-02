@@ -9,6 +9,7 @@
 #include "game.h"
 #include "inventory.h"
 #include "itype.h"
+#include "make_static.h"
 #include "melee.h"
 #include "memorial_logger.h"
 #include "messages.h"
@@ -196,13 +197,13 @@ ret_val<void> Character::can_wear( const item &it, bool with_equip_change ) cons
     return ret_val<void>::make_success();
 }
 
-cata::optional<std::list<item>::iterator>
+std::optional<std::list<item>::iterator>
 Character::wear( int pos, bool interactive )
 {
     return wear( item_location( *this, &i_at( pos ) ), interactive );
 }
 
-cata::optional<std::list<item>::iterator>
+std::optional<std::list<item>::iterator>
 Character::wear( item_location item_wear, bool interactive )
 {
     item to_wear = *item_wear;
@@ -213,7 +214,7 @@ Character::wear( item_location item_wear, bool interactive )
                                    _( "<npcname> is already wearing that." )
                                  );
         }
-        return cata::nullopt;
+        return std::nullopt;
     }
     if( to_wear.is_null() ) {
         if( interactive ) {
@@ -221,7 +222,7 @@ Character::wear( item_location item_wear, bool interactive )
                                    _( "You don't have that item." ),
                                    _( "<npcname> doesn't have that item." ) );
         }
-        return cata::nullopt;
+        return std::nullopt;
     }
 
     bool was_weapon;
@@ -250,7 +251,7 @@ Character::wear( item_location item_wear, bool interactive )
         } else {
             i_add( to_wear_copy );
         }
-        return cata::nullopt;
+        return std::nullopt;
     }
 
     if( was_weapon ) {
@@ -260,7 +261,7 @@ Character::wear( item_location item_wear, bool interactive )
     return result;
 }
 
-cata::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, const item &to_wear,
+std::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, const item &to_wear,
         bool interactive, bool do_calc_encumbrance, bool do_sort_items, bool quiet )
 {
     const bool was_deaf = guy.is_deaf();
@@ -331,7 +332,7 @@ cata::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, con
     return new_item_it;
 }
 
-cata::optional<std::list<item>::iterator> Character::wear_item( const item &to_wear,
+std::optional<std::list<item>::iterator> Character::wear_item( const item &to_wear,
         bool interactive, bool do_calc_encumbrance )
 {
     invalidate_inventory_validity_cache();
@@ -340,7 +341,7 @@ cata::optional<std::list<item>::iterator> Character::wear_item( const item &to_w
         if( interactive ) {
             add_msg_if_player( m_info, "%s", ret.c_str() );
         }
-        return cata::nullopt;
+        return std::nullopt;
     }
 
     return worn.wear_item( *this, to_wear, interactive, do_calc_encumbrance );
@@ -465,6 +466,12 @@ item Character::item_worn_with_flag( const flag_id &f ) const
     return worn.item_worn_with_flag( f );
 }
 
+item *Character::item_worn_with_id( const itype_id &i )
+{
+    return worn.item_worn_with_id( i );
+}
+
+
 bool Character::wearing_something_on( const bodypart_id &bp ) const
 {
     return worn.wearing_something_on( bp );
@@ -480,14 +487,14 @@ bool Character::is_barefoot() const
     return worn.is_barefoot();
 }
 
-cata::optional<const item *> outfit::item_worn_with_inv_let( const char invlet ) const
+std::optional<const item *> outfit::item_worn_with_inv_let( const char invlet ) const
 {
     for( const item &i : worn ) {
         if( i.invlet == invlet ) {
             return &i;
         }
     }
-    return cata::nullopt;
+    return std::nullopt;
 }
 
 side outfit::is_wearing_shoes( const bodypart_id &bp ) const
@@ -618,7 +625,7 @@ bool outfit::one_per_layer_change_side( item &it, const Character &guy ) const
     const bool item_one_per_layer = it_copy.has_flag( json_flag_ONE_PER_LAYER );
     for( const item &worn_item : worn ) {
         if( item_one_per_layer && worn_item.has_flag( json_flag_ONE_PER_LAYER ) ) {
-            const cata::optional<side> sidedness_conflict = it_copy.covers_overlaps( worn_item );
+            const std::optional<side> sidedness_conflict = it_copy.covers_overlaps( worn_item );
             if( sidedness_conflict ) {
                 const std::string player_msg = string_format(
                                                    _( "Your %s conflicts with %s, so you cannot swap its side." ),
@@ -922,6 +929,18 @@ item outfit::item_worn_with_flag( const flag_id &f ) const
     return it_with_flag;
 }
 
+item *outfit::item_worn_with_id( const itype_id &i )
+{
+    item *it_with_id = nullptr;
+    for( item &it : worn ) {
+        if( it.typeId() == i ) {
+            it_with_id = &it;
+            break;
+        }
+    }
+    return it_with_id;
+}
+
 std::list<item> outfit::get_visible_worn_items( const Character &guy ) const
 {
     std::list<item> result;
@@ -1196,7 +1215,7 @@ ret_val<void> outfit::only_one_conflicts( const item &clothing ) const
         }
 
         if( this_restricts_only_one || i.has_flag( json_flag_ONE_PER_LAYER ) ) {
-            cata::optional<side> overlaps = clothing.covers_overlaps( i );
+            std::optional<side> overlaps = clothing.covers_overlaps( i );
             if( overlaps && sidedness_conflicts( *overlaps ) ) {
                 return ret_val<void>::make_failure( _( "%1$s conflicts with %2$s!" ), clothing.tname(), i.tname() );
             }
@@ -1284,7 +1303,7 @@ void outfit::one_per_layer_sidedness( item &clothing ) const
 {
     const bool item_one_per_layer = clothing.has_flag( json_flag_ONE_PER_LAYER );
     for( const item &worn_item : worn ) {
-        const cata::optional<side> sidedness_conflict = clothing.covers_overlaps( worn_item );
+        const std::optional<side> sidedness_conflict = clothing.covers_overlaps( worn_item );
         if( sidedness_conflict && ( item_one_per_layer ||
                                     worn_item.has_flag( json_flag_ONE_PER_LAYER ) ) ) {
             // we can assume both isn't an option because it'll be caught in can_wear
@@ -1689,36 +1708,25 @@ item &outfit::front()
 
 static void item_armor_enchantment_adjust( Character &guy, damage_unit &du, item &armor )
 {
-    switch( du.type ) {
-        case damage_type::ACID:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_ACID );
-            break;
-        case damage_type::BASH:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BASH );
-            break;
-        case damage_type::BIOLOGICAL:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BIO );
-            break;
-        case damage_type::COLD:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_COLD );
-            break;
-        case damage_type::CUT:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_CUT );
-            break;
-        case damage_type::ELECTRIC:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_ELEC );
-            break;
-        case damage_type::HEAT:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_HEAT );
-            break;
-        case damage_type::STAB:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_STAB );
-            break;
-        case damage_type::BULLET:
-            du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BULLET );
-            break;
-        default:
-            return;
+    // FIXME: hardcoded damage types -> enchantments
+    if( du.type == STATIC( damage_type_id( "acid" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_ACID );
+    } else if( du.type == STATIC( damage_type_id( "bash" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BASH );
+    } else if( du.type == STATIC( damage_type_id( "biological" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BIO );
+    } else if( du.type == STATIC( damage_type_id( "cold" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_COLD );
+    } else if( du.type == STATIC( damage_type_id( "cut" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_CUT );
+    } else if( du.type == STATIC( damage_type_id( "electric" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_ELEC );
+    } else if( du.type == STATIC( damage_type_id( "heat" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_HEAT );
+    } else if( du.type == STATIC( damage_type_id( "stab" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_STAB );
+    } else if( du.type == STATIC( damage_type_id( "bullet" ) ) ) {
+        du.amount = armor.calculate_by_enchantment( guy, du.amount, enchant_vals::mod::ITEM_ARMOR_BULLET );
     }
     du.amount = std::max( 0.0f, du.amount );
 }
@@ -1756,7 +1764,8 @@ void outfit::absorb_damage( Character &guy, damage_unit &elem, bodypart_id bp,
         item_armor_enchantment_adjust( guy, elem, armor );
         // Heat damage can set armor on fire
         // Even though it doesn't cause direct physical damage to it
-        if( outermost && elem.type == damage_type::HEAT && elem.amount >= 1.0f ) {
+        // FIXME: Hardcoded damage type
+        if( outermost && elem.type == STATIC( damage_type_id( "heat" ) ) && elem.amount >= 1.0f ) {
             // TODO: Different fire intensity values based on damage
             fire_data frd{ 2 };
             destroy = !armor.has_flag( flag_INTEGRATED ) && armor.burn( frd );
@@ -1805,13 +1814,13 @@ void outfit::absorb_damage( Character &guy, damage_unit &elem, bodypart_id bp,
     }
 }
 
-float outfit::damage_resist( const damage_type dmg_type, const bodypart_id &bp,
+float outfit::damage_resist( const damage_type_id &dt, const bodypart_id &bp,
                              const bool to_self ) const
 {
     float ret = 0.0f;
     for( const item &i : worn ) {
         if( i.covers( bp ) ) {
-            ret += i.resist( dmg_type, to_self, bp );
+            ret += i.resist( dt, to_self, bp );
         }
     }
     return ret;
@@ -2003,6 +2012,9 @@ void outfit::on_takeoff( Character &guy )
 void outfit::on_item_wear( Character &guy )
 {
     for( item &clothing : worn ) {
+        if( clothing.relic_data && clothing.type->relic_data ) {
+            clothing.relic_data = clothing.type->relic_data;
+        }
         guy.on_item_wear( clothing );
     }
 }
@@ -2114,7 +2126,7 @@ void outfit::prepare_bodymap_info( bodygraph_info &info, const bodypart_id &bp,
         }
     }
 
-    // go through every item and see how it handles every part of the character
+    // go through every item and see how it handles these part(s) of the character
     for( const item &armor : worn ) {
         // check if it covers the part
         // FIXME: item::covers( const sub_bodypart_id & ) always
@@ -2131,6 +2143,24 @@ void outfit::prepare_bodymap_info( bodygraph_info &info, const bodypart_id &bp,
             }
         }
         if( !covered ) {
+            // some clothing flags provide warmth without providing coverage or encumberance
+            // these are included in the worn list so that players aren't confused about why body parts are warm
+            // but not included in the later coverage and encumberance calculations
+            if( ( bp == body_part_hand_l || bp == body_part_hand_r ) && armor.has_flag( flag_POCKETS ) &&
+                person.can_use_pockets() ) {
+                //~ name of a clothing/armor item, indicating it has pockets providing hand warmth
+                info.worn_names.push_back( string_format( _( "%s (pockets)" ), armor.tname() ) );
+            }
+            if( bp == body_part_head && armor.has_flag( flag_HOOD ) && person.can_use_hood() ) {
+                //~ name of a clothing/armor item, indicating it has a hood providing head warmth
+                info.worn_names.push_back( string_format( _( "%s (hood)" ), armor.tname() ) );
+            }
+            if( bp == body_part_mouth && armor.has_flag( flag_COLLAR ) && person.can_use_collar() ) {
+                // collars don't cover or encumber, but do conditionally provide warmth
+                //~ name of a clothing/armor item, indicating it has a collar providing mouth warmth
+                info.worn_names.push_back( string_format( _( "%s (collar)" ), armor.tname() ) );
+            }
+
             continue;
         }
 
@@ -2328,24 +2358,18 @@ void outfit::add_stash( Character &guy, const item &newit, int &remaining_charge
             if( pocke == nullptr ) {
                 continue;
             }
-            if( pocke->rigid() ) {
-                // Rigid container allow to fill unconditionally till volume limit
-                // because do not depend on the capacity of the parent's pocket.
-                filled_count = pocke->fill_with( newit, guy, remaining_charges, false, false );
-            } else {
-                int max_contain_value = pocke->remaining_capacity_for_item( newit );
-                const item_location parent_data = pocket_data_ptr.parent;
+            int max_contain_value = pocke->remaining_capacity_for_item( newit );
+            const item_location parent_data = pocket_data_ptr.parent;
 
-                if( parent_data.has_parent() ) {
-                    if( parent_data.parents_can_contain_recursive( &temp_it ) ) {
-                        max_contain_value = parent_data.max_charges_by_parent_recursive( temp_it );
-                    } else {
-                        max_contain_value = 0;
-                    }
+            if( parent_data.has_parent() ) {
+                if( parent_data.parents_can_contain_recursive( &temp_it ) ) {
+                    max_contain_value = parent_data.max_charges_by_parent_recursive( temp_it );
+                } else {
+                    max_contain_value = 0;
                 }
-                const int charges = std::min( max_contain_value, remaining_charges ) ;
-                filled_count = pocke->fill_with( newit, guy, charges, false, false );
             }
+            const int charges = std::min( max_contain_value, remaining_charges ) ;
+            filled_count = pocke->fill_with( newit, guy, charges, false, false );
             num_contained += filled_count;
             remaining_charges -= filled_count;
         }
@@ -2387,7 +2411,7 @@ item_location outfit::first_item_covering_bp( Character &guy, bodypart_id bp )
     return item_location{};
 }
 
-cata::optional<int> outfit::get_item_position( const item &it ) const
+std::optional<int> outfit::get_item_position( const item &it ) const
 {
     int pos = 0;
     for( const item &clothing : worn ) {
@@ -2396,7 +2420,7 @@ cata::optional<int> outfit::get_item_position( const item &it ) const
         }
         pos++;
     }
-    return cata::nullopt;
+    return std::nullopt;
 }
 
 const item &outfit::i_at( int position ) const
@@ -2493,44 +2517,8 @@ std::vector<item_pocket *> outfit::grab_drop_pockets()
 void outfit::organize_items_menu()
 {
     std::vector<item *> to_organize;
-    uilist pocket_selector;
     for( item &i : worn ) {
         to_organize.push_back( &i );
     }
-    pocket_favorite_callback cb( to_organize, pocket_selector );
-
-    pocket_selector.title = _( "Inventory Organization" );
-    pocket_selector.text = cb.title;
-    pocket_selector.callback = &cb;
-    pocket_selector.w_x_setup = 0;
-    pocket_selector.w_width_setup = []() {
-        return TERMX;
-    };
-    pocket_selector.pad_right_setup = []() {
-        return std::max( TERMX / 2, TERMX - 50 );
-    };
-    pocket_selector.w_y_setup = 0;
-    pocket_selector.w_height_setup = []() {
-        return TERMY;
-    };
-    pocket_selector.input_category = "INVENTORY";
-    pocket_selector.additional_actions = { { "FAV_PRIORITY", translation() },
-        { "FAV_AUTO_PICKUP", translation() },
-        { "FAV_AUTO_UNLOAD", translation() },
-        { "FAV_ITEM", translation() },
-        { "FAV_CATEGORY", translation() },
-        { "FAV_WHITELIST", translation() },
-        { "FAV_BLACKLIST", translation() },
-        { "FAV_CLEAR", translation() },
-        { "FAV_MOVE_ITEM", translation() },
-        { "FAV_CONTEXT_MENU", translation() },
-        { "FAV_SAVE_PRESET", translation() },
-        { "FAV_APPLY_PRESET", translation() },
-        { "FAV_DEL_PRESET", translation() }
-    };
-    // we override confirm
-    pocket_selector.allow_confirm = false;
-    pocket_selector.allow_additional = true;
-
-    pocket_selector.query();
+    pocket_management_menu( _( "Inventory Organization" ), to_organize );
 }
