@@ -1,4 +1,4 @@
-# Martial arts and techniques JSON file contents
+# Martial arts and Techniques
 
 ### Martial arts
 
@@ -11,6 +11,7 @@
   "description": "A secret martial art used only by developers and cheaters.",    // In-game description
   "initiate": [ "You stand ready.", "%s stands ready." ],     // Message shown when player or NPC chooses this art
   "autolearn": [ [ "unarmed", "2" ] ],     // A list of skill requirements that if met, automatically teach the player the martial art
+  "teachable": true,          // Whether it's possible to teach this style between characters
   "learn_difficulty": 5,      // Difficulty to learn a style from book based on "primary skill"
                               // Total chance to learn a style from a single read of the book is equal to one in (10 + learn_difficulty - primary_skill)
   "arm_block": 99,            // Unarmed skill level at which arm blocking is unlocked
@@ -78,9 +79,8 @@
   "crit_tec": true,           // This technique only works on a critical hit
   "crit_ok": true,            // This technique works on both normal and critical hits
   "attack_override": false,   // This technique replaces the base attack it triggered on, nulling damage and movecost (instead using the tech's flat_bonuses), and counts as unarmed for the purposes of skill training and special melee effects
-  "downed_target": true,      // Technique only works on a downed target
-  "stunned_target": true,     // Technique only works on a stunned target
-  "human_target": true,       // Technique only works on a human-like target
+  "condition": "u_is_outside",// Optional (array of) dialog conditions the attack requires to trigger.  Failing these will disqualify the tech from being selected
+  "condition_desc": "Needs X",// Description string describing the conditions of this attack (since dialog conditions can't be automatically evaluated)       
   "repeat_min": 1,            // Technique's damage and any added effects are repeated rng( repeat_min, repeat_max) times. The target's armor and the effect's chances are applied for each repeat.
   "repeat_max": 1,
   "knockback_dist": 1,        // Distance target is knocked back

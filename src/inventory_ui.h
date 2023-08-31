@@ -202,6 +202,7 @@ class inventory_entry
         struct entry_cell_cache_t {
             nc_color color = c_unset;
             std::vector<std::string> text;
+            int lang_version = 0;
         };
 
         const entry_cell_cache_t &get_entry_cell_cache( inventory_selector_preset const &preset ) const;
@@ -624,6 +625,7 @@ class inventory_selector
         void add_vehicle_items( const tripoint &target );
         void add_nearby_items( int radius = 1 );
         void add_remote_map_items( tinymap *remote_map, const tripoint &target );
+        void add_basecamp_items( const basecamp &camp );
         /** Remove all items */
         void clear_items();
         /** Assigns a title that will be shown on top of the menu. */

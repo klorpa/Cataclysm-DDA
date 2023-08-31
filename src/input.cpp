@@ -1164,17 +1164,21 @@ std::string input_context::get_desc(
     const std::string &text,
     const input_event_filter &evt_filter ) const
 {
-    return get_desc( action_descriptor, text, evt_filter,
-                     to_translation(
-                         //~ %1$s: action description text before key,
-                         //~ %2$s: key description,
-                         //~ %3$s: action description text after key.
-                         "keybinding", "%1$s(%2$s)%3$s" ),
-                     to_translation(
-                         // \u00A0 is the non-breaking space
-                         //~ %1$s: key description,
-                         //~ %2$s: action description.
-                         "keybinding", "[%1$s]\u00A0%2$s" ) );
+
+    // Keybinding tips
+    static const translation inline_fmt = to_translation(
+            //~ %1$s: action description text before key,
+            //~ %2$s: key description,
+            //~ %3$s: action description text after key.
+            "keybinding", "%1$s[<color_light_green>%2$s</color>]%3$s" );
+    static const translation separate_fmt = to_translation(
+            // \u00A0 is the non-breaking space
+            //~ %1$s: key description,
+            //~ %2$s: action description.
+            "keybinding", "[<color_light_green>%1$s</color>]\u00A0%2$s" );
+
+    return get_desc( action_descriptor, text, evt_filter, inline_fmt,
+                     separate_fmt );
 }
 
 std::string input_context::describe_key_and_name( const std::string &action_descriptor,
@@ -1197,6 +1201,7 @@ const std::string &input_context::handle_input( const int timeout )
     next_action.type = input_event_t::error;
     const std::string *result = &CATA_ERROR;
     while( true ) {
+
         next_action = inp_mngr.get_input_event( preferred_keyboard_mode );
         if( next_action.type == input_event_t::timeout ) {
             result = &TIMEOUT;
@@ -1204,6 +1209,13 @@ const std::string &input_context::handle_input( const int timeout )
         }
 
         const std::string &action = input_to_action( next_action );
+
+        //Special global key to toggle language to english and back
+        if( action == "toggle_language_to_en" ) {
+            g->toggle_language_to_en();
+            ui_manager::invalidate_all_ui_adaptors();
+            ui_manager::redraw_invalidated();
+        }
 
         // Special help action
         if( action == "HELP_KEYBINDINGS" ) {

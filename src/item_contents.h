@@ -67,7 +67,11 @@ class item_contents
          */
         ret_val<void> can_contain( const item &it, bool ignore_pkt_settings = true,
                                    units::volume remaining_parent_volume = 10000000_ml ) const;
+        ret_val<void> can_contain( const item &it, int &copies_remaining, bool ignore_pkt_settings = true,
+                                   units::volume remaining_parent_volume = 10000000_ml ) const;
         ret_val<void> can_contain_rigid( const item &it, bool ignore_pkt_settings = true ) const;
+        ret_val<void> can_contain_rigid( const item &it, int &copies_remaining,
+                                         bool ignore_pkt_settings = true ) const;
         bool can_contain_liquid( bool held_or_ground ) const;
 
         bool contains_no_solids() const;
@@ -114,6 +118,10 @@ class item_contents
         std::list<item *> all_known_contents();
         std::list<const item *> all_known_contents() const;
 
+        // returns all the ablative armor in pockets
+        std::list<item *> all_ablative_armor();
+        std::list<const item *> all_ablative_armor() const;
+
         /** gets all gunmods in the item */
         std::vector<item *> gunmods();
         /** gets all gunmods in the item */
@@ -127,6 +135,9 @@ class item_contents
 
         std::vector<item *> ebooks();
         std::vector<const item *> ebooks() const;
+
+        std::vector<item *> cables();
+        std::vector<const item *> cables() const;
 
         void update_modified_pockets( const std::optional<const pocket_data *> &mag_or_mag_well,
                                       std::vector<const pocket_data *> container_pockets );
@@ -180,6 +191,8 @@ class item_contents
         std::vector<item_pocket *> get_all_contained_pockets();
         std::vector<const item_pocket *> get_all_standard_pockets() const;
         std::vector<item_pocket *> get_all_standard_pockets();
+        std::vector<const item_pocket *> get_all_ablative_pockets() const;
+        std::vector<item_pocket *> get_all_ablative_pockets();
         std::vector<const item_pocket *>
         get_pockets( std::function<bool( item_pocket const & )> const &filter ) const;
         std::vector<item_pocket *>
@@ -238,7 +251,7 @@ class item_contents
          * volume, length, weight, ammo type, and all other physical restrictions.  This is
          * synonymous with the success of item_contents::can_contain with that item.
          *
-         * For the MOD, CORPSE, SOFTWARE, and MIGRATION pocket types, if contents have such a
+         * For the MOD, CORPSE, SOFTWARE, CABLE, and MIGRATION pocket types, if contents have such a
          * pocket, items will be successfully inserted without regard to volume, length, or any
          * other restrictions, since these pockets are not considered to be normal "containers".
          */
@@ -262,10 +275,11 @@ class item_contents
         void on_pickup( Character &guy, item *avoid = nullptr );
         bool spill_contents( const tripoint &pos );
         // spill items that don't fit in the container
-        void overflow( const tripoint &pos );
+        void overflow( const tripoint &pos, const item_location &loc );
         void clear_items();
         // clears all items from magazine type pockets
         void clear_magazines();
+        void clear_pockets_if( const std::function<bool( item_pocket const & )> &filter );
         void update_open_pockets();
 
         /**
@@ -280,7 +294,7 @@ class item_contents
         // heats up the contents if they have temperature
         void heat_up();
         // returns amount of ammo consumed
-        int ammo_consume( int qty, const tripoint &pos );
+        int ammo_consume( int qty, const tripoint &pos, float fuel_efficiency = -1.0 );
         item *magazine_current();
         std::set<ammotype> ammo_types() const;
         int ammo_capacity( const ammotype &ammo ) const;

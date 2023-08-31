@@ -49,12 +49,14 @@
 #include "wcwidth.h"
 #include "worldfactory.h"
 
+static const mod_id MOD_INFORMATION_dda( "dda" );
+
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR,
     LOADCHAR,
     WORLD,
-    SPECIAL,
+    TUTORIAL,
     SETTINGS,
     HELP,
     CREDITS,
@@ -171,17 +173,6 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
             //~ Message Of The Day
             display_text( mmenu_motd, _( "MOTD" ), sel_line );
             return;
-        case main_menu_opts::SPECIAL:
-            for( int i = 1; i < static_cast<int>( special_game_type::NUM_SPECIAL_GAME_TYPES ); i++ ) {
-                std::string spec_name = special_game_name( static_cast<special_game_type>( i ) );
-                nc_color clr = i == sel2 ? hilite( c_yellow ) : c_yellow;
-                sub_opts.push_back( shortcut_text( clr, spec_name ) );
-                int len = utf8_width( shortcut_text( clr, spec_name ), true );
-                if( len > xlen ) {
-                    xlen = len;
-                }
-            }
-            break;
         case main_menu_opts::SETTINGS:
             for( int i = 0; static_cast<size_t>( i ) < vSettingsSubItems.size(); ++i ) {
                 nc_color clr = i == sel2 ? hilite( c_yellow ) : c_yellow;
@@ -457,7 +448,7 @@ void main_menu::init_strings()
     vMenuItems.emplace_back( pgettext( "Main Menu", "<N|n>ew Game" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "Lo<a|A>d" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "<W|w>orld" ) );
-    vMenuItems.emplace_back( pgettext( "Main Menu", "<S|s>pecial" ) );
+    vMenuItems.emplace_back( pgettext( "Main Menu", "T<u|U>torial Game" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "Se<t|T>tings" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "H<e|E|?>lp" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "<C|c>redits" ) );
@@ -776,9 +767,7 @@ bool main_menu::opening_screen()
                 case main_menu_opts::SETTINGS:
                     max_item_count = vSettingsSubItems.size();
                     break;
-                case main_menu_opts::SPECIAL:
-                    max_item_count = static_cast<int>( special_game_type::NUM_SPECIAL_GAME_TYPES ) - 1;
-                    break;
+                case main_menu_opts::TUTORIAL:
                 case main_menu_opts::HELP:
                 case main_menu_opts::QUIT:
                 default:
@@ -805,22 +794,24 @@ bool main_menu::opening_screen()
                     break;
                 case main_menu_opts::QUIT:
                     return false;
-                case main_menu_opts::SPECIAL:
+                case main_menu_opts::TUTORIAL:
                     if( MAP_SHARING::isSharing() ) {
                         on_error();
-                        popup( _( "Special games don't work with shared maps." ) );
-                    } else if( sel2 >= 0 && sel2 < static_cast<int>( special_game_type::NUM_SPECIAL_GAME_TYPES ) - 1 ) {
+                        popup( _( "Tutorial doesn't work with shared maps." ) );
+                    } else {
                         on_out_of_scope cleanup( [&player_character]() {
                             g->gamemode.reset();
                             player_character = avatar();
                             world_generator->set_active_world( nullptr );
                         } );
-                        g->gamemode = get_special_game( static_cast<special_game_type>( sel2 + 1 ) );
+                        g->gamemode = get_special_game( special_game_type::TUTORIAL );
                         // check world
-                        WORLD *world = world_generator->make_new_world( static_cast<special_game_type>( sel2 + 1 ) );
+                        WORLD *world = world_generator->make_new_world( special_game_type::TUTORIAL );
                         if( world == nullptr ) {
                             break;
                         }
+                        world->active_mod_order.clear();
+                        world->active_mod_order.emplace_back( MOD_INFORMATION_dda );
                         world_generator->set_active_world( world );
                         try {
                             g->setup();
@@ -1044,9 +1035,29 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     return false;
 }
 
+static std::optional<std::chrono::seconds> get_playtime_from_save( const WORLD *world,
+        const save_t &save )
+{
+    cata_path playtime_file = world->folder_path_path() / ( save.base_path() + ".pt" );
+    std::optional<std::chrono::seconds> pt_seconds;
+    if( file_exist( playtime_file ) ) {
+        read_from_file( playtime_file, [&pt_seconds]( std::istream & fin ) {
+            if( fin.eof() ) {
+                return;
+            }
+            std::chrono::seconds::rep dur_seconds = 0;
+            fin.imbue( std::locale::classic() );
+            fin >> dur_seconds;
+            pt_seconds = std::chrono::seconds( dur_seconds );
+        } );
+    }
+    return pt_seconds;
+}
+
 bool main_menu::load_character_tab( const std::string &worldname )
 {
-    savegames = world_generator->get_world( worldname )->world_saves;
+    WORLD *cur_world = world_generator->get_world( worldname );
+    savegames = cur_world->world_saves;
     if( MAP_SHARING::isSharing() ) {
         auto new_end = std::remove_if( savegames.begin(), savegames.end(), []( const save_t &str ) {
             return str.decoded_name() != MAP_SHARING::getUsername();
@@ -1065,7 +1076,19 @@ bool main_menu::load_character_tab( const std::string &worldname )
     mmenu.border_color = c_white;
     int opt_val = 0;
     for( const save_t &s : savegames ) {
-        mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN, s.decoded_name() );
+        std::optional<std::chrono::seconds> playtime = get_playtime_from_save( cur_world, s );
+        std::string save_str = s.decoded_name();
+        if( playtime ) {
+            int padding = std::max( 16 - utf8_width( save_str ), 0 ) + 2;
+            std::chrono::seconds::rep tmp_sec = playtime->count();
+            int pt_sec = static_cast<int>( tmp_sec % 60 );
+            int pt_min = static_cast<int>( tmp_sec % 3600 ) / 60;
+            int pt_hrs = static_cast<int>( tmp_sec / 3600 );
+            save_str = string_format( "%s%s<color_c_light_blue>[%02d:%02d:%02d]</color>",
+                                      save_str, std::string( padding, ' ' ), pt_hrs, pt_min,
+                                      static_cast<int>( pt_sec ) );
+        }
+        mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN, save_str );
     }
     mmenu.entries.emplace_back( opt_val, true, 'q', _( "<- Back to Main Menu" ), c_yellow, c_yellow );
     mmenu.query();
@@ -1106,11 +1129,11 @@ void main_menu::world_tab( const std::string &worldname )
     }
 
     auto clear_world = [this, &worldname]( bool do_delete ) {
-        world_generator->delete_world( worldname, do_delete );
         // NOLINTNEXTLINE(cata-use-localized-sorting)
         if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] ) {
             last_world_pos--;
         }
+        world_generator->delete_world( worldname, do_delete );
         savegames.clear();
         MAPBUFFER.clear();
         overmap_buffer.clear();

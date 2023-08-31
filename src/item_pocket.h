@@ -44,6 +44,7 @@ class item_pocket
             CORPSE, // the "corpse" pocket - bionics embedded in a corpse
             SOFTWARE, // software put into usb or some such
             EBOOK, // holds electronic books for a device or usb
+            CABLE, // pocket for storing power/data cables and handling their connections
             MIGRATION, // this allows items to load contents that are too big, in order to spill them later.
             LAST
         };
@@ -116,6 +117,9 @@ class item_pocket
                 const std::optional<std::string> &get_preset_name() const;
                 void set_preset_name( const std::string & );
 
+                void set_was_edited();
+                bool was_edited() const;
+
                 void info( std::vector<iteminfo> &info ) const;
 
                 void serialize( JsonOut &json ) const;
@@ -130,6 +134,7 @@ class item_pocket
                 bool collapsed = false;
                 bool disabled = false;
                 bool unload = true;
+                bool player_edited = false;
         };
 
         item_pocket() = default;
@@ -191,9 +196,15 @@ class item_pocket
 
         /**
          * Can the pocket contain the specified item?
-         * @param it the item being put in
+         * @param it The item being put in
+         * @param copies_remaining An optional integer reference that will be set to the number of item copies that won't fit
          */
+        ret_val<contain_code> can_contain( const item &it, int &copies_remaining ) const;
         ret_val<contain_code> can_contain( const item &it ) const;
+        /**
+        * @brief A version of can_contain that skips the weight and volume check.
+        */
+        ret_val<contain_code> can_contain_skip_space_checks( const item &it ) const;
         bool can_contain_liquid( bool held_or_ground ) const;
         bool contains_phase( phase_id phase ) const;
 
@@ -291,7 +302,7 @@ class item_pocket
         std::optional<item> remove_item( const item &it );
         std::optional<item> remove_item( const item_location &it );
         // spills any contents that can't fit into the pocket, largest items first
-        void overflow( const tripoint &pos );
+        void overflow( const tripoint &pos, const item_location &loc );
         bool spill_contents( const tripoint &pos );
         void on_pickup( Character &guy, item *avoid = nullptr );
         void on_contents_changed();
@@ -325,6 +336,7 @@ class item_pocket
           * may create a new pocket
           */
         void add( const item &it, item **ret = nullptr );
+        void add( const item &it, int copies, item **ret );
         bool can_unload_liquid() const;
 
         int fill_with( const item &contained, Character &guy, int amount = 0,
@@ -397,6 +409,9 @@ class item_pocket
         static void delete_preset( std::vector<item_pocket::favorite_settings>::iterator iter );
         static std::vector<item_pocket::favorite_settings> pocket_presets;
 
+        // Set wether rigid items are blocked in the pocket
+        void set_no_rigid( const std::set<sub_bodypart_id> &is_no_rigid );
+
         // should the name of this pocket be used as a description
         bool name_as_description = false; // NOLINT(cata-serialize)
     private:
@@ -407,6 +422,11 @@ class item_pocket
         // the items inside the pocket
         std::list<item> contents;
         bool _sealed = false;
+        // list of sub body parts that can't currently support rigid ablative armor
+        std::set<sub_bodypart_id> no_rigid;
+
+        ret_val<contain_code> _can_contain( const item &it, int &copies_remaining,
+                                            bool check_for_enough_space ) const;
 };
 
 /**

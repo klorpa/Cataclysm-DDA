@@ -739,7 +739,8 @@
           "mx_military": 50,
           "mx_science": 400,
           "mx_collegekids": 500,
-          "mx_roadblock": 1000,
+          "mx_roadblock": 830,
+          "mx_roadblock_mil": 170,
           "mx_bandits_block": 800,
           "mx_drugdeal": 300,
           "mx_supplydrop": 100,
@@ -956,8 +957,7 @@
         "s_apt_2": 30,
         "school": 15,
         "motel_city": 10,
-        "fishing_pond_city": 10,
-        "railroad_city": 5
+        "fishing_pond_city": 10
       },
       "parks": {
         "park": 50,

@@ -1,4 +1,6 @@
-# System info
+# Mutations
+
+## System info
 
 Mutations in Dark Days Ahead happen through a series of EOCs and hardcoded checks. Different items - usually dedicated mutagens or primers - give the character certain vitamins, and recurring EOCs will use these vitamins to mutate them. Other than uncontrolled mutations from sources like radiation, which are completely random, the traits that a character will get through mutation are determined entirely by the vitamins they have in their body.
 
@@ -37,7 +39,7 @@ The mutation system works in several steps. All time references are in game time
   * Otherwise, two outcomes can happen: either the character starts mutating, or nothing happens again. The chance to start mutating is equal to the amount of mutagen in the character, while the chance to do nothing is a constant 2500. One of these options is then picked based on weight. Thus, for a player with 1250 mutagen in their body, the compared weights would be 1250 to begin mutating versus 2500 to do nothing, or a 1 in 3 chance to start mutating.
 2. Once mutation begins, the character mutates once immediately and the player receives a unique message. The character then gains the invisible `Changing` trait, which signifies to the game that they are actively undergoing periodic mutation.
 3. Every 1 to 6 hours, the game will attempt to mutate the character. As long as the character has enough mutagen when the effect fires, the attempt will proceed and the timer will restart. Between 60 and 140 mutagen is removed from their body *when the attempt is made* - it does not have to succeed for the mutagen to be deducted.
-4. The engine attempts to mutate the character based on the primers they have in their body. 
+4. The engine attempts to mutate the character based on the primers they have in their body.
   * If the character has no primer in their body, the player receives a distinct message and nothing happens. The `Changing` trait will immediately be removed when this happens, stopping the process.
   * Otherwise, the game chooses a random mutation in that category. This is the target mutation.
   * If the character has an existing trait that conflicts with the target mutation, the conflicting trait will be removed or downgraded, and nothing else will happen. Otherwise, the player will gain that mutation.
@@ -199,7 +201,8 @@ Note that **all new traits that can be obtained through mutation must be purifia
   "stamina_regen_modifier": 0.1,              // Increase stamina regen by this proportion (1.0 being 100% of normal regen).
   "cardio_multiplier": 1.5,                   // Multiplies total cardio fitness by this amount.
   "healing_multiplier": 0.5,                  // Multiplier to PLAYER/NPC_HEALING_RATE.
-  "healing_awake": 1.0,                       // Percentage of healing rate used while awake.
+  "healing_awake": 1.0,                       // Healing rate per turn while awake. Positives will increase healing while negatives will decrease healing.
+  "healing_resting": 0.5,                     // Healing rate per turn while resting. Positives will increase healing while negatives will decrease healing.
   "mending_modifier": 1.2,                    // Multiplier on how fast your limbs mend (1.2 is 20% faster).
   "attackcost_modifier": 0.9,                 // Attack cost modifier (0.9 is 10% faster, 1.1 is 10% slower).
   "movecost_modifier": 0.9,                   // Overall movement speed cost modifier (0.9 is 10% faster, 1.1 is 10% slower).
@@ -209,11 +212,12 @@ Note that **all new traits that can be obtained through mutation must be purifia
   "weight_capacity_modifier": 0.9,            // Carrying capacity modifier (0.9 is 10% less, 1.1 is 10% more).
   "social_modifiers": { "persuade": -10 },    // Social modifiers.  Can be: intimidate, lie, persuade.
   "spells_learned": [ [ "spell_slime_spray", 1 ] ], // Spells learned and the level they're at after gaining the trait/mutation.
-  "transform": { 
+  "transform": {
     "target": "BIOLUM1",                      // Trait_id of the mutation this one will transform into.
     "msg_transform": "You turn your photophore OFF.", // Message displayed upon transformation.
     "active": false,                          // If true, mutation will start powered when activated (turn ON).
-    "moves": 100                              // Moves cost per activation (default: 0).
+    "moves": 100,                              // Moves cost per activation (default: 0).
+    "safe": false                              // If true the transformation will use the normal mutation progression rules - removing conflicting traits, requiring thresholds (but not using any vitamins or causing instability)
   },
   "triggers": [                               // List of sublist of triggers, all sublists must be True for the mutation to activate.
     [                                         // Sublist of trigger: at least one trigger must be true for the sublist to be true.
@@ -237,7 +241,7 @@ Note that **all new traits that can be obtained through mutation must be purifia
   ],
   "activated_is_setup": true,                 // If this is true the bellow activated EOC runs then the mutation turns on for processing every turn. If this is false the below "activated_eocs" will run and then the mod will turn itself off.
   "activated_eocs": [ "eoc_id_1" ],           // List of effect_on_conditions that attempt to activate when this mutation is successfully activated.
-  "processed_eocs": [ "eoc_id_1" ],           // List of effect_on_conditions that attempt to activate every time (defined above) units of time. Time of 0 means every turn it processes.
+  "processed_eocs": [ "eoc_id_1" ],           // List of effect_on_conditions that attempt to activate every time (defined above) units of time. Time of 0 means every turn it processes. Processed when the mutation is active for activatable mutations and always for non-activatable ones.
   "deactivated_eocs": [ "eoc_id_1" ],         // List of effect_on_conditions that attempt to activate when this mutation is successfully deactivated.
   "enchantments": [ "ench_id_1" ],            // List of enchantments granted by this mutation.  Can be either IDs or an inline definition of the enchantment (see MAGIC.md)
   "temperature_speed_modifier": 0.5,          // If nonzero, become slower when cold, and faster when hot (1.0 gives +/-1% speed for each degree above or below 65 F).
@@ -297,6 +301,10 @@ These fields are optional, but are very frequently used in mutations and their c
 
 There are many, many optional fields present for mutations to let them do all sorts of things. You can see them documented above.
 
+### EOC details
+
+Mutations support EOC on activate, deactivate and for processing. As well for each of those the EOC has access to the context variable `this` which is the ID of the mutation itself.
+
 ### Sample trait: Example Sleep
 
 ```json
@@ -326,7 +334,7 @@ A Mutation Category identifies a set of interrelated mutations that as a whole e
 | `mutagen_message`       | A message displayed to the player when they mutate in this category.
 | `memorial_message`      | The memorial message to display when a character crosses the associated mutation threshold.
 | `vitamin`               | The vitamin id of the primer of this category. The character's vitamin level will act as the weight of this category when selecting which category to try and mutate towards, and gets decreased on successful mutation by the trait's mutagen cost.
-| `base_removal_chance`   | Int, percent chance for a mutation of this category removing a conflicting base (starting) trait, rolled per `Character::mutate_towards` attempts.  Default 100%.  Removed base traits will **NOT** be considered base traits from here on, even if you regain them later. 
+| `base_removal_chance`   | Int, percent chance for a mutation of this category removing a conflicting base (starting) trait, rolled per `Character::mutate_towards` attempts.  Default 100%.  Removed base traits will **NOT** be considered base traits from here on, even if you regain them later.
 | `base_removal_cost_mul` | Float, multiplier on the primer cost of the trait that removed a canceled starting trait, down to 0.0 for free mutations as long as a starting trait was given up.  Default 3.0, used for human-like categories and lower as categories become more inhuman.
 | `wip`                   | A flag indicating that a mutation category is unfinished and shouldn't have consistency tests run on it. See tests/mutation_test.cpp.
 | `skip_test`             | If true, this mutation category will be skipped in consistency tests; this should only be used if you know what you're doing. See tests/mutation_test.cpp.
@@ -366,4 +374,3 @@ A mutation migration can be used to migrate a mutation that formerly existed gra
 | `remove`      | Optional\*. Boolean. If neither `trait` or `variant` are specified, this must be true.
 
 \*One of these three must be specified.
-

@@ -36,11 +36,12 @@
         "coverage": 12
       }
     ],
-    "harvest": "zombie",
+    "harvest": "zombie_humanoid",
+    "grab_strength": 20,
     "special_attacks": [
-      { "type": "bite", "cooldown": 5 },
-      [ "GRAB", 12 ],
-      [ "scratch", 20 ],
+      { "id": "bite_humanoid", "cooldown": 5 },
+      { "id": "grab", "cooldown": 12 },
+      { "id": "scratch_humanoid" },
       { "type": "leap", "cooldown": 10, "max_range": 5 }
     ],
     "death_drops": "default_zombie_death_drops",
@@ -52,6 +53,7 @@
       "SMELLS",
       "STUMBLES",
       "WARM",
+      "GRABS",
       "BASHES",
       "GROUP_BASH",
       "POISON",
@@ -101,14 +103,13 @@
         "coverage": 12
       }
     ],
-    "harvest": "zombie",
+    "harvest": "zombie_humanoid",
+    "grab_strength": 30,
     "special_attacks": [
-      { "type": "leap", "cooldown": 2, "max_range": 8 },
-      {
-        "type": "bite",
-        "cooldown": 10,
-        "damage_max_instance": [ { "damage_type": "stab", "amount": 12, "armor_multiplier": 0.7 } ]
-      }
+      { "id": "bite_humanoid", "damage_max_instance": [ { "damage_type": "stab", "amount": 12, "armor_multiplier": 0.7 } ] },
+      { "id": "grab", "cooldown": 12 },
+      { "id": "scratch_humanoid" },
+      { "type": "leap", "cooldown": 2, "max_range": 8 }
     ],
     "death_drops": "default_zombie_death_drops",
     "burn_into": "mon_zombie_fiend",
@@ -118,6 +119,7 @@
       "SMELLS",
       "STUMBLES",
       "WARM",
+      "GRABS",
       "BASHES",
       "GROUP_BASH",
       "POISON",
@@ -154,7 +156,7 @@
     "weakpoint_sets": [ "wps_arthropod_hymenoptera", "wps_arthropod_flying" ],
     "families": [ "prof_intro_biology", "prof_wp_zombie", "prof_wp_flying" ],
     "vision_night": 5,
-    "harvest": "zombie",
+    "harvest": "zombie_animal",
     "special_attacks": [ { "id": "impale", "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_multiplier": 0.6 } ] } ],
     "upgrades": { "half_life": 42, "into_group": "GROUP_ZOMBIE_RAPTOR_UPGRADES" },
     "flags": [
@@ -183,7 +185,8 @@
     "upgrades": {  },
     "extend": { "flags": [ "NIGHT_INVISIBILITY" ] },
     "vision_day": 10,
-    "vision_night": 25
+    "vision_night": 25,
+    "harvest": "zombie_animal_shadow"
   },
   {
     "type": "MONSTER",
@@ -209,6 +212,7 @@
     "id": "mon_spawn_raptor_electric",
     "name": { "str": "zaptor" },
     "copy-from": "mon_spawn_raptor",
+    "harvest": "zombie_animal_electric",
     "color": "light_cyan",
     "diff": 10,
     "description": "This small, winged predator darts through the air on three thinly-haired wings that look like stretched human hands.  A jagged spike with a pulsing electrical glow juts out from the point where the wings meet.",

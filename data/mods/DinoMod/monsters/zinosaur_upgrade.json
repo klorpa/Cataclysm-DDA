@@ -134,6 +134,28 @@
   },
   {
     "type": "MONSTER",
+    "id": "mon_ziganotosaurus_brute",
+    "name": { "str": "Giganotosaurus Avenger" },
+    "copy-from": "mon_ziganotosaurus",
+    "description": "The shambling corpse of a huge predatory bipedal dinosaur with a strong chin.  Its entire body bulges with distended muscles and swollen, festering wounds.",
+    "diff": 2,
+    "color": "red",
+    "proportional": { "hp": 1.5, "speed": 1.5 },
+    "relative": {
+      "melee_dice": 1,
+      "melee_dice_sides": 5,
+      "melee_damage": [ { "damage_type": "cut", "amount": 2 } ],
+      "vision_night": 1,
+      "armor": { "bash": 4, "cut": 6, "bullet": 5 }
+    },
+    "bleed_rate": 50,
+    "upgrades": { "half_life": 42, "into_group": "GROUP_zallosaurus_BRUTE" },
+    "special_attacks": [ [ "SMASH", 30 ] ],
+    "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
+    "categories": [ "DINOSAUR" ]
+  },
+  {
+    "type": "MONSTER",
     "id": "mon_ziats_brute",
     "name": { "str": "Siats Stonehenge" },
     "copy-from": "mon_ziats",
@@ -173,7 +195,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ { "id": "bite_grab", "cooldown": 7 }, [ "SMASH", 30 ] ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -196,7 +218,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ { "id": "bite_grab", "cooldown": 7 }, [ "SMASH", 30 ] ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -219,7 +241,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], { "id": "bite_grab", "cooldown": 7 } ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -242,7 +264,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], { "id": "bite_grab", "cooldown": 7 } ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -265,7 +287,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], { "id": "bite_grab", "cooldown": 7 } ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -286,7 +308,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], { "id": "bite_grab", "cooldown": 7 } ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -309,7 +331,7 @@
     },
     "bleed_rate": 50,
     "upgrades": { "half_life": 42, "into_group": "GROUP_zyrannosaurus_BRUTE" },
-    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], { "id": "bite_grab", "cooldown": 7 } ],
     "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
     "categories": [ "DINOSAUR" ]
   },
@@ -1733,7 +1755,7 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie" ],
     "weakpoint_sets": [ "wps_dinosaur_body" ],
     "hp": 430,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "id": "teeth_zino_max", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_max", "cooldown": 5 } ],
     "burn_into": "mon_zpinosaurus_scorched",
     "fungalize_into": "mon_zpinosaurus_fungus",
     "flags": [
@@ -1784,7 +1806,7 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie" ],
     "weakpoint_sets": [ "wps_dinosaur_body" ],
     "hp": 260,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "id": "teeth_zino_mid", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_mid", "cooldown": 5 } ],
     "burn_into": "mon_zorvosaurus_scorched",
     "fungalize_into": "mon_zorvosaurus_fungus",
     "flags": [
@@ -1822,7 +1844,7 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie" ],
     "weakpoint_sets": [ "wps_dinosaur_body" ],
     "hp": 190,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "id": "teeth_zino_mid", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "id": "teeth_zino_mid", "cooldown": 5 } ],
     "burn_into": "mon_zallosaurus_scorched",
     "fungalize_into": "mon_zallosaurus_fungus",
     "flags": [
@@ -1853,10 +1875,28 @@
     "melee_dice_sides": 5,
     "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
     "hp": 270,
-    "special_attacks": [ [ "GRAB", 10 ], { "id": "teeth_zino_mid", "cooldown": 10 }, [ "LUNGE", 20 ] ],
+    "special_attacks": [ { "id": "bite_grab" }, { "id": "teeth_zino_mid", "cooldown": 10 }, [ "LUNGE", 20 ] ],
     "burn_into": "mon_zacrocanthosaurus_scorched",
     "fungalize_into": "mon_zacrocanthosaurus_fungus",
     "armor": { "cut": 4, "bullet": 2, "bash": 11 }
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_ziganotosaurus_shady",
+    "name": { "str": "shady giganotosaurus zombie" },
+    "copy-from": "mon_zallosaurus_shady",
+    "description": "An uncanny shadow envelops this creature.  You can make out the outline of a huge, bipedal dinosaur with big, sharp teeth.",
+    "upgrades": { "half_life": 15, "into": "mon_ziganotosaurus_nightstalker" },
+    "speed": 90,
+    "attack_cost": 90,
+    "melee_dice": 4,
+    "melee_dice_sides": 5,
+    "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
+    "hp": 400,
+    "special_attacks": [ { "id": "bite_grab" }, { "id": "teeth_zino_mid", "cooldown": 10 }, [ "LUNGE", 20 ] ],
+    "burn_into": "mon_ziganotosaurus_scorched",
+    "fungalize_into": "mon_ziganotosaurus_fungus",
+    "armor": { "cut": 4, "bullet": 2, "bash": 4 }
   },
   {
     "type": "MONSTER",
@@ -1868,7 +1908,12 @@
     "speed": 60,
     "attack_cost": 60,
     "hp": 365,
-    "special_attacks": [ { "id": "bio_op_takedown", "cooldown": 20 }, [ "RANGED_PULL", 20 ], [ "GRAB_DRAG", 10 ] ],
+    "special_attacks": [
+      { "id": "bio_op_takedown", "cooldown": 20 },
+      { "id": "ranged_pull", "cooldown": 20 },
+      { "id": "grab_drag" },
+      { "id": "drag_followup" }
+    ],
     "burn_into": "mon_ziats_scorched",
     "fungalize_into": "mon_ziats_fungus",
     "categories": [ "DINOSAUR" ]
@@ -1883,7 +1928,7 @@
     "hp": 200,
     "special_attacks": [
       { "id": "teeth_zino_mid", "cooldown": 15 },
-      [ "GRAB", 15 ],
+      { "id": "bite_grab", "cooldown": 15 },
       { "type": "leap", "cooldown": 20, "max_range": 5, "allow_no_target": true }
     ],
     "burn_into": "mon_zryptosaurus_scorched",
@@ -1900,7 +1945,12 @@
     "speed": 100,
     "melee_damage": [ { "damage_type": "cut", "amount": 14 } ],
     "hp": 220,
-    "special_attacks": [ { "id": "teeth_zino_mid", "cooldown": 15 }, [ "GRAB", 15 ], [ "scratch", 20 ], [ "LUNGE", 20 ] ],
+    "special_attacks": [
+      { "id": "teeth_zino_mid", "cooldown": 15 },
+      { "id": "bite_grab", "cooldown": 15 },
+      [ "scratch", 20 ],
+      [ "LUNGE", 20 ]
+    ],
     "burn_into": "mon_zappalachiosaurus_scorched",
     "fungalize_into": "mon_zappalachiosaurus_fungus",
     "categories": [ "DINOSAUR" ]
@@ -1916,7 +1966,12 @@
     "attack_cost": 50,
     "melee_damage": [ { "damage_type": "cut", "amount": 13 } ],
     "hp": 250,
-    "special_attacks": [ { "id": "teeth_zino_mid", "cooldown": 10 }, [ "GRAB", 15 ], [ "scratch", 20 ], [ "LUNGE", 15 ] ],
+    "special_attacks": [
+      { "id": "teeth_zino_mid", "cooldown": 10 },
+      { "id": "bite_grab", "cooldown": 15 },
+      [ "scratch", 20 ],
+      [ "LUNGE", 15 ]
+    ],
     "burn_into": "mon_zorgosaurus_scorched",
     "fungalize_into": "mon_zorgosaurus_fungus",
     "categories": [ "DINOSAUR" ]
@@ -1932,7 +1987,13 @@
     "melee_dice_sides": 4,
     "melee_damage": [ { "damage_type": "cut", "amount": 14 } ],
     "hp": 270,
-    "special_attacks": [ { "id": "teeth_zino_mid", "cooldown": 5 }, [ "GRAB", 7 ], [ "scratch", 20 ], [ "LUNGE", 5 ], [ "LONGSWIPE", 25 ] ],
+    "special_attacks": [
+      { "id": "teeth_zino_mid", "cooldown": 5 },
+      { "id": "bite_grab", "cooldown": 7 },
+      [ "scratch", 20 ],
+      [ "LUNGE", 5 ],
+      [ "LONGSWIPE", 25 ]
+    ],
     "burn_into": "mon_zalbertosaurus_scorched",
     "fungalize_into": "mon_zalbertosaurus_fungus",
     "categories": [ "DINOSAUR" ],
@@ -1944,7 +2005,7 @@
     "name": { "str": "shady qianzhousaurus zombie" },
     "copy-from": "mon_zyrannosaurus_shady",
     "description": "An uncanny shadow envelops this creature.  You can make out the outline of a huge, bipedal dinosaur with feathery edges and a large head.",
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 7 ], { "id": "teeth_zino_mid", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_mid", "cooldown": 5 } ],
     "upgrades": { "half_life": 15, "into": "mon_zianzhousaurus_nightstalker" },
     "volume": "550 L",
     "weight": "770 kg",
@@ -1964,7 +2025,7 @@
     "id": "mon_zanuqsaurus_shady",
     "name": { "str_sp": "shady nanuqsaurus zombie" },
     "copy-from": "mon_zyrannosaurus_shady",
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 7 ], { "id": "teeth_zino_mid", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_mid", "cooldown": 5 } ],
     "upgrades": { "half_life": 15, "into": "mon_zanuqsaurus_nightstalker" },
     "melee_dice": 4,
     "melee_dice_sides": 5,
@@ -2017,7 +2078,7 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie" ],
     "weakpoint_sets": [ "wps_lg_theropod_body" ],
     "hp": 400,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 7 ], { "id": "teeth_zino_max", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_max", "cooldown": 5 } ],
     "burn_into": "mon_zyrannosaurus_scorched",
     "fungalize_into": "mon_zyrannosaurus_fungus",
     "flags": [
@@ -2026,6 +2087,7 @@
       "HEARS",
       "PET_MOUNTABLE",
       "POISON",
+      "GRABS",
       "STUMBLES",
       "BASHES",
       "DESTROYS",
@@ -2068,13 +2130,14 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie" ],
     "weakpoint_sets": [ "wps_dinosaur_body" ],
     "hp": 120,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 } ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "type": "bite", "cooldown": 5 } ],
     "burn_into": "mon_zallimimus_scorched",
     "fungalize_into": "mon_zallimimus_fungus",
     "flags": [
       "SEES",
       "SMELLS",
       "HEARS",
+      "GRABS",
       "PET_MOUNTABLE",
       "POISON",
       "STUMBLES",
@@ -2135,7 +2198,7 @@
     "melee_dice": 3,
     "melee_dice_sides": 6,
     "hp": 320,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 10 }, [ "LONGSWIPE", 20 ] ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "type": "bite", "cooldown": 10 }, [ "LONGSWIPE", 20 ] ],
     "burn_into": "mon_zerizinosaurus_scorched",
     "fungalize_into": "mon_zerizinosaurus_fungus",
     "categories": [ "DINOSAUR" ]
@@ -2155,7 +2218,7 @@
     "melee_dice": 4,
     "melee_dice_sides": 4,
     "hp": 160,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 }, [ "LONGSWIPE", 30 ] ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "type": "bite", "cooldown": 5 }, [ "LONGSWIPE", 30 ] ],
     "burn_into": "mon_zothronychus_scorched",
     "fungalize_into": "mon_zothronychus_fungus",
     "categories": [ "DINOSAUR" ],
@@ -2175,7 +2238,7 @@
     "melee_dice": 4,
     "melee_dice_sides": 4,
     "hp": 120,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 }, [ "LONGSWIPE", 30 ] ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "type": "bite", "cooldown": 5 }, [ "LONGSWIPE", 30 ] ],
     "burn_into": "mon_zanzu_scorched",
     "fungalize_into": "mon_zanzu_fungus",
     "categories": [ "DINOSAUR" ],
@@ -2211,7 +2274,7 @@
     "special_attacks": [
       { "type": "leap", "cooldown": 5, "max_range": 5, "allow_no_target": true },
       [ "scratch", 10 ],
-      [ "GRAB", 10 ],
+      { "id": "bite_grab" },
       { "id": "teeth_zino_mid", "cooldown": 5 }
     ],
     "burn_into": "mon_zeinonychus_scorched",
@@ -2280,10 +2343,22 @@
     "families": [ "prof_intro_biology", "prof_wp_zombie", "prof_wp_nat_armored" ],
     "weakpoint_sets": [ "wps_ankylosaurid_body" ],
     "hp": 375,
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 }, [ "tailsmash_DinoMod", 30 ] ],
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab" }, { "type": "bite", "cooldown": 5 }, [ "tailsmash_DinoMod", 30 ] ],
     "burn_into": "mon_zankylosaurus_scorched",
     "fungalize_into": "mon_zankylosaurus_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "POISON", "STUMBLES", "NO_BREATHE", "REVIVES", "FILTHY", "BASHES", "NIGHT_INVISIBILITY" ],
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "HEARS",
+      "GRABS",
+      "POISON",
+      "STUMBLES",
+      "NO_BREATHE",
+      "REVIVES",
+      "FILTHY",
+      "BASHES",
+      "NIGHT_INVISIBILITY"
+    ],
     "harvest": "zed_dino_leather",
     "categories": [ "DINOSAUR" ],
     "armor": { "bash": 16, "cut": 21, "bullet": 7 }
@@ -2426,6 +2501,28 @@
     "copy-from": "mon_zacrocanthosaurus_shady",
     "looks_like": "mon_zacrocanthosaurus_shady",
     "description": "An uncanny shadow envelops this creature.  You can make out the outline of a large, bipedal dinosaur with big, sharp teeth.",
+    "diff": 2,
+    "proportional": { "hp": 1.5, "speed": 1.5 },
+    "relative": {
+      "melee_dice": 1,
+      "melee_dice_sides": 5,
+      "melee_damage": [ { "damage_type": "stab", "amount": 2 } ],
+      "vision_night": 1,
+      "armor": { "bash": 4, "cut": 6, "bullet": 5 }
+    },
+    "bleed_rate": 50,
+    "special_attacks": [ [ "SMASH", 30 ] ],
+    "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
+    "upgrades": {  },
+    "categories": [ "DINOSAUR" ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_ziganotosaurus_nightstalker",
+    "name": { "str_sp": "giganotosaurus nightstalker" },
+    "copy-from": "mon_ziganotosaurus_shady",
+    "looks_like": "mon_ziganotosaurus_shady",
+    "description": "An uncanny shadow envelops this creature.  You can make out the outline of a huge, bipedal dinosaur with big, sharp teeth.",
     "diff": 2,
     "proportional": { "hp": 1.5, "speed": 1.5 },
     "relative": {
@@ -2969,6 +3066,19 @@
   },
   {
     "type": "MONSTER",
+    "id": "mon_siganotosaurus",
+    "name": { "str_sp": "skeletal giganotosaurus" },
+    "copy-from": "mon_sallosaurus",
+    "description": "Monstrous columns of dense bone lifting sharp, curved teeth dripping with black goo.",
+    "speed": 90,
+    "attack_cost": 90,
+    "hp": 350,
+    "melee_dice": 5,
+    "melee_dice_sides": 8,
+    "upgrades": { "half_life": 15, "into": "mon_sallosaurus_brute" }
+  },
+  {
+    "type": "MONSTER",
     "id": "mon_skiats",
     "name": { "str_sp": "skeletal siats" },
     "copy-from": "mon_sacrocanthosaurus",
@@ -2977,7 +3087,12 @@
     "melee_dice": 3,
     "melee_dice_sides": 5,
     "melee_damage": [ { "damage_type": "cut", "amount": 6 } ],
-    "special_attacks": [ { "id": "bio_op_takedown", "cooldown": 20 }, [ "RANGED_PULL", 20 ], [ "GRAB_DRAG", 10 ] ],
+    "special_attacks": [
+      { "id": "bio_op_takedown", "cooldown": 20 },
+      { "id": "ranged_pull", "cooldown": 20 },
+      { "id": "grab_drag" },
+      { "id": "drag_followup" }
+    ],
     "upgrades": { "half_life": 15, "into": "mon_sallosaurus_brute" }
   },
   {
@@ -2993,7 +3108,7 @@
     "melee_damage": [ { "damage_type": "cut", "amount": 18 } ],
     "special_attacks": [
       { "id": "teeth_zino_mid", "cooldown": 15 },
-      [ "GRAB", 15 ],
+      { "id": "bite_grab", "cooldown": 15 },
       { "type": "leap", "cooldown": 20, "max_range": 5, "allow_no_target": true }
     ],
     "upgrades": { "half_life": 15, "into": "mon_syrannosaurus_brute" }
@@ -3005,7 +3120,12 @@
     "copy-from": "mon_sryptosaurus",
     "description": "Monstrous columns of dense bone lifting sharp, pointed teeth dripping with black goo.",
     "hp": 88,
-    "special_attacks": [ { "id": "teeth_zino_mid", "cooldown": 15 }, [ "GRAB", 15 ], [ "scratch", 20 ], [ "LUNGE", 20 ] ]
+    "special_attacks": [
+      { "id": "teeth_zino_mid", "cooldown": 15 },
+      { "id": "bite_grab", "cooldown": 15 },
+      [ "scratch", 20 ],
+      [ "LUNGE", 20 ]
+    ]
   },
   {
     "type": "MONSTER",
@@ -3029,7 +3149,13 @@
     "melee_dice": 4,
     "melee_dice_sides": 7,
     "melee_damage": [ { "damage_type": "cut", "amount": 18 } ],
-    "special_attacks": [ { "id": "teeth_zino_mid", "cooldown": 10 }, [ "GRAB", 7 ], [ "scratch", 20 ], [ "LUNGE", 5 ], [ "LONGSWIPE", 25 ] ]
+    "special_attacks": [
+      { "id": "teeth_zino_mid", "cooldown": 10 },
+      { "id": "bite_grab", "cooldown": 7 },
+      [ "scratch", 20 ],
+      [ "LUNGE", 5 ],
+      [ "LONGSWIPE", 25 ]
+    ]
   },
   {
     "type": "MONSTER",
@@ -3063,7 +3189,7 @@
     "melee_dice": 5,
     "melee_dice_sides": 8,
     "melee_damage": [ { "damage_type": "cut", "amount": 19 } ],
-    "special_attacks": [ { "id": "teeth_zino_max", "cooldown": 10 }, [ "GRAB", 7 ], [ "scratch", 20 ], [ "LUNGE", 5 ] ],
+    "special_attacks": [ { "id": "teeth_zino_max", "cooldown": 10 }, { "id": "bite_grab", "cooldown": 7 }, [ "scratch", 20 ], [ "LUNGE", 5 ] ],
     "hp": 120,
     "weakpoint_sets": [ "wps_lg_theropod_body" ]
   },
@@ -3079,7 +3205,7 @@
     "melee_dice": 5,
     "melee_dice_sides": 5,
     "melee_damage": [ { "damage_type": "cut", "amount": 25 } ],
-    "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 7 ], { "id": "teeth_zino_max", "cooldown": 5 } ]
+    "special_attacks": [ [ "scratch", 10 ], { "id": "bite_grab", "cooldown": 7 }, { "id": "teeth_zino_max", "cooldown": 5 } ]
   },
   {
     "type": "MONSTER",
@@ -3182,7 +3308,7 @@
     "special_attacks": [
       { "type": "leap", "cooldown": 5, "max_range": 5, "allow_no_target": true },
       [ "scratch", 10 ],
-      [ "GRAB", 10 ],
+      { "id": "bite_grab" },
       { "id": "teeth_zino_mid", "cooldown": 5 }
     ],
     "vision_day": 20,
@@ -4410,7 +4536,7 @@
     "relative": { "armor": { "bash": 30, "cut": 37 } },
     "bleed_rate": 50,
     "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
-    "special_attacks": [ [ "GRAB", 30 ], [ "FLAMETHROWER", 30 ] ],
+    "special_attacks": [ { "id": "bite_grab", "cooldown": 30 }, [ "FLAMETHROWER", 30 ] ],
     "families": [ "prof_intro_biology", "prof_wp_zombie", "prof_wp_syn_armored" ],
     "upgrades": {  },
     "death_drops": [
@@ -4436,7 +4562,7 @@
     "relative": { "armor": { "bash": 30, "cut": 37 } },
     "bleed_rate": 50,
     "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
-    "special_attacks": [ [ "GRAB", 30 ], [ "FLAMETHROWER", 30 ] ],
+    "special_attacks": [ { "id": "bite_grab", "cooldown": 30 }, [ "FLAMETHROWER", 30 ] ],
     "families": [ "prof_intro_biology", "prof_wp_zombie", "prof_wp_syn_armored" ],
     "upgrades": {  },
     "death_drops": [
@@ -4489,8 +4615,7 @@
     "upgrades": {  },
     "death_drops": [
       { "item": "mil_plate", "count": 4 },
-      { "group": "helicopter", "count": 10 },
-      { "group": "mil_hw", "count": 10 },
+      { "group": "helicopter", "count": 20 },
       { "group": "supplies_metal", "count": 10 }
     ],
     "death_function": { "effect": { "id": "death_fireball", "hit_self": true } },
@@ -4537,8 +4662,7 @@
     "upgrades": {  },
     "death_drops": [
       { "item": "mil_plate", "count": 4 },
-      { "group": "helicopter", "count": 10 },
-      { "group": "mil_hw", "count": 10 },
+      { "group": "helicopter", "count": 20 },
       { "group": "supplies_metal", "count": 10 }
     ],
     "death_function": { "effect": { "id": "death_fireball", "hit_self": true } },
@@ -4585,8 +4709,7 @@
     "upgrades": {  },
     "death_drops": [
       { "item": "mil_plate", "count": 4 },
-      { "group": "helicopter", "count": 10 },
-      { "group": "mil_hw", "count": 10 },
+      { "group": "helicopter", "count": 20 },
       { "group": "supplies_metal", "count": 10 }
     ],
     "death_function": { "effect": { "id": "death_fireball", "hit_self": true } },
