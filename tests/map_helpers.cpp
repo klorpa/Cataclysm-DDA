@@ -18,11 +18,11 @@
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
-#include "item_pocket.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "npc.h"
+#include "pocket_type.h"
 #include "point.h"
 #include "ret_val.h"
 #include "submap.h"
@@ -108,7 +108,7 @@ void clear_items( const int zlevel )
     const int mapsize = here.getmapsize() * SEEX;
     for( int x = 0; x < mapsize; ++x ) {
         for( int y = 0; y < mapsize; ++y ) {
-            here.i_clear( { x, y, zlevel } );
+            here.i_clear( tripoint_bub_ms{ x, y, zlevel } );
         }
     }
 }
@@ -205,7 +205,7 @@ void player_add_headlamp()
     item headlamp( "wearable_light_on" );
     item battery( "light_battery_cell" );
     battery.ammo_set( battery.ammo_default(), -1 );
-    headlamp.put_in( battery, item_pocket::pocket_type::MAGAZINE_WELL );
+    headlamp.put_in( battery, pocket_type::MAGAZINE_WELL );
     Character &you = get_player_character();
     you.worn.wear_item( you, headlamp, false, true );
 }
@@ -235,6 +235,7 @@ void set_time( const time_point &time )
     int z = you.posz();
     you.recalc_sight_limits();
     map &here = get_map();
+    here.invalidate_visibility_cache();
     here.update_visibility_cache( z );
     here.invalidate_map_cache( z );
     here.build_map_cache( z );

@@ -26,6 +26,8 @@ class effect;
 class item;
 struct itype;
 
+extern const matec_id tec_none;
+
 class weapon_category
 {
     public:
@@ -150,7 +152,13 @@ class ma_technique
         bool dummy = false;
         bool crit_tec = false;
         bool crit_ok = false;
+        bool reach_tec = false; // only possible to use during a reach attack
+        bool reach_ok = false; // possible to use during a reach attack
         bool attack_override = false; // The attack replaces the one it triggered off of
+
+        // performs the listed technique if this attack procs a crit. tec_none skips this behavior.
+        // requires crit_ok to be true
+        matec_id crit_tec_id = tec_none;
 
         ma_requirements reqs;
 
@@ -164,7 +172,6 @@ class ma_technique
         int stun_dur = 0;
         int knockback_dist = 0;
         float knockback_spread = 0.0f;  // adding randomness to knockback, like tec_throw
-        bool powerful_knockback = false;
         std::string aoe;                // corresponds to an aoe shape, defaults to just the target
         bool knockback_follow = false;  // Character follows the knocked-back party into their former tile
 
@@ -355,6 +362,7 @@ class martialart
         translation name;
         translation description;
         std::vector<translation> initiate;
+        int priority = 0;
         std::vector<std::pair<std::string, int>> autolearn_skills;
         skill_id primary_skill;
         bool teachable = true;

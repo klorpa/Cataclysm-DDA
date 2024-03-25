@@ -20,9 +20,9 @@
 #include "butchery_requirements.h"
 #include "cata_assert.h"
 #include "cata_scope_helpers.h"
-#include "cata_utility.h"
 #include "character_modifier.h"
 #include "city.h"
+#include "climbing.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "condition.h"
@@ -45,11 +45,11 @@
 #include "flag.h"
 #include "gates.h"
 #include "harvest.h"
+#include "input.h"
 #include "item_action.h"
 #include "item_category.h"
 #include "item_factory.h"
 #include "itype.h"
-#include "json.h"
 #include "json_loader.h"
 #include "loading_ui.h"
 #include "lru_cache.h"
@@ -78,7 +78,6 @@
 #include "overmap.h"
 #include "overmap_connection.h"
 #include "overmap_location.h"
-#include "path_info.h"
 #include "profession.h"
 #include "profession_group.h"
 #include "proficiency.h"
@@ -97,7 +96,6 @@
 #include "speech.h"
 #include "speed_description.h"
 #include "start_location.h"
-#include "string_formatter.h"
 #include "test_data.h"
 #include "text_snippets.h"
 #include "translations.h"
@@ -267,6 +265,7 @@ void DynamicDataLoader::initialize()
     add( "bionic", &bionic_data::load_bionic );
     add( "bionic_migration", &bionic_data::load_bionic_migration );
     add( "profession", &profession::load_profession );
+    add( "profession_blacklist", &profession_blacklist::load_profession_blacklist );
     add( "profession_group", &profession_group::load_profession_group );
     add( "profession_item_substitutions", &profession::load_item_substitutions );
     add( "proficiency", &proficiency::load_proficiencies );
@@ -406,6 +405,7 @@ void DynamicDataLoader::initialize()
     add( "technique", &load_technique );
     add( "weapon_category", &weapon_category::load_weapon_categories );
     add( "martial_art", &load_martial_art );
+    add( "climbing_aid", &climbing_aid::load_climbing_aid );
     add( "effect_type", &load_effect_type );
     add( "oter_id_migration", &overmap::load_oter_id_migration );
     add( "overmap_terrain", &overmap_terrains::load );
@@ -560,6 +560,7 @@ void DynamicDataLoader::unload_data()
     butchery_requirements::reset();
     sub_body_part_type::reset();
     bodygraph::reset();
+    climbing_aid::reset();
     weapon_category::reset();
     clear_techniques_and_martial_arts();
     character_modifier::reset();
@@ -612,6 +613,7 @@ void DynamicDataLoader::unload_data()
     overmap_terrains::reset();
     overmap::reset_oter_id_migrations();
     profession::reset();
+    profession_blacklist::reset();
     proficiency::reset();
     proficiency_category::reset();
     mood_face::reset();
@@ -730,6 +732,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             {
                 _( "Monster types" ), []()
                 {
+                    set_mon_flag_ids();
                     MonsterGenerator::generator().finalize_mtypes();
                 }
             },
@@ -741,6 +744,8 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Crafting recipes" ), &recipe_dictionary::finalize },
             { _( "Recipe groups" ), &recipe_group::check },
             { _( "Martial arts" ), &finalize_martial_arts },
+            { _( "Scenarios" ), &scenario::finalize },
+            { _( "Climbing aids" ), &climbing_aid::finalize },
             { _( "NPC classes" ), &npc_class::finalize_all },
             { _( "Missions" ), &mission_type::finalize },
             { _( "Harvest lists" ), &harvest_list::finalize_all },
@@ -766,7 +771,9 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
         ui.proceed();
     }
 
-    check_consistency( ui );
+    if( !get_option<bool>( "SKIP_VERIFICATION" ) ) {
+        check_consistency( ui );
+    }
     finalized = true;
 }
 
@@ -818,8 +825,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Crafting recipes" ), &recipe_dictionary::check_consistency },
             { _( "Professions" ), &profession::check_definitions },
             { _( "Profession groups" ), &profession_group::check_profession_group_consistency },
-            { _( "Scenarios" ), &scenario::check_definitions },
             { _( "Martial arts" ), &check_martialarts },
+            { _( "Climbing aid" ), &climbing_aid::check_consistency },
             { _( "Mutations" ), &mutation_branch::check_consistency },
             { _( "Mutation categories" ), &mutation_category_trait::check_consistency },
             { _( "Region settings" ), check_region_settings },

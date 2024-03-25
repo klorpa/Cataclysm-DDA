@@ -211,8 +211,9 @@ void vehicle::smart_controller_handle_turn( const std::optional<float> &k_tracti
     if( max_battery_level == 0 || !discharge_forbidden_soft ) {
         target_charging_rate = 0_W;
     } else {
-        target_charging_rate = units::from_watt( ( max_battery_level * cfg.battery_hi / 100 -
-                               cur_battery_level ) * 10 / ( 6 * 3 ) );
+        target_charging_rate = units::from_watt( static_cast<std::int64_t>( ( max_battery_level *
+                               cfg.battery_hi / 100 -
+                               cur_battery_level ) * 10 / ( 6 * 3 ) ) );
     }
     //      ( max_battery_level * battery_hi / 100 - cur_battery_level )  * (1000 / (60 * 30))   // originally
     //                                ^ battery_hi%                  bat to W ^         ^ 30 minutes
@@ -1225,7 +1226,8 @@ void vehicle::handle_trap( const tripoint &p, vehicle_part &vp_wheel )
     Character &player_character = get_player_character();
     const bool seen = player_character.sees( p );
     const bool known = tr.can_see( p, player_character );
-    if( seen ) {
+    const bool damage_done = vp_wheel.info().durability <= veh_data.damage;
+    if( seen && damage_done ) {
         if( known ) {
             //~ %1$s: name of the vehicle; %2$s: name of the related vehicle part; %3$s: trap name
             add_msg( m_bad, _( "The %1$s's %2$s runs over %3$s." ), name, vp_wheel.name(), tr.name() );
@@ -1242,7 +1244,8 @@ void vehicle::handle_trap( const tripoint &p, vehicle_part &vp_wheel )
         if( veh_data.do_explosion ) {
             const Creature *source = player_in_control( player_character ) ? &player_character : nullptr;
             explosion_handler::explosion( source, p, veh_data.damage, 0.5f, false, veh_data.shrapnel );
-        } else {
+            // Don't damage wheels with very high durability, such as roller drums or rail wheels
+        } else if( damage_done ) {
             // Hit the wheel directly since it ran right over the trap.
             damage_direct( here, vp_wheel, veh_data.damage );
         }
@@ -1431,7 +1434,7 @@ void vehicle::pldrive( Character &driver, const point &p, int z )
         // - 50% Skill at Per/Dex 12: 1-in-18 chance
     }
     if( z != 0 && is_rotorcraft() ) {
-        driver.moves = std::min( driver.moves, 0 );
+        driver.set_moves( std::min( driver.get_moves(), 0 ) );
         thrust( 0, z );
     }
     units::angle turn_delta = vehicles::steer_increment * p.x;
@@ -1457,7 +1460,7 @@ void vehicle::pldrive( Character &driver, const point &p, int z )
 
         // If you've got more moves than speed, it's most likely time stop
         // Let's get rid of that
-        driver.moves = std::min( driver.moves, driver.get_speed() );
+        driver.set_moves( std::min( driver.get_moves(), driver.get_speed() ) );
 
         ///\EFFECT_DEX reduces chance of losing control of vehicle when turning
 
@@ -1497,20 +1500,20 @@ void vehicle::pldrive( Character &driver, const point &p, int z )
                 fumble_time = 2;
             }
             turn_delta *= fumble_factor;
-            cost = std::max( cost, driver.moves + fumble_time * 100 );
+            cost = std::max( cost, driver.get_moves() + fumble_time * 100 );
         } else if( one_in( 10 ) ) {
             // Don't warn all the time or it gets spammy
             if( cost >= driver.get_speed() * 2 ) {
-                driver.add_msg_if_player( m_warning, _( "It takes you a very long time to steer that vehicle!" ) );
+                driver.add_msg_if_player( m_warning, _( "It takes you a very long time to steer the vehicle!" ) );
             } else if( cost >= driver.get_speed() * 1.5f ) {
-                driver.add_msg_if_player( m_warning, _( "It takes you a long time to steer that vehicle!" ) );
+                driver.add_msg_if_player( m_warning, _( "It takes you a long time to steer the vehicle!" ) );
             }
         }
 
         turn( turn_delta );
 
         // At most 3 turns per turn, because otherwise it looks really weird and jumpy
-        driver.moves -= std::max( cost, driver.get_speed() / 3 + 1 );
+        driver.mod_moves( -std::max( cost, driver.get_speed() / 3 + 1 ) );
     }
 
     if( p.y != 0 ) {

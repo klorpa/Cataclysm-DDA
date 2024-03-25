@@ -57,29 +57,29 @@ static const json_character_flag json_flag_ROOTS2( "ROOTS2" );
 static const json_character_flag json_flag_ROOTS3( "ROOTS3" );
 static const json_character_flag json_flag_SMALL( "SMALL" );
 static const json_character_flag json_flag_TINY( "TINY" );
+static const json_character_flag json_flag_TREE_COMMUNION_PLUS( "TREE_COMMUNION_PLUS" );
+
+static const move_mode_id move_mode_prone( "prone" );
 
 static const mtype_id mon_player_blob( "mon_player_blob" );
 
 static const mutation_category_id mutation_category_ANY( "ANY" );
 
+static const trait_id trait_ARVORE_FOREST_MAPPING( "ARVORE_FOREST_MAPPING" );
 static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_BURROWLARGE( "BURROWLARGE" );
 static const trait_id trait_CHAOTIC_BAD( "CHAOTIC_BAD" );
-static const trait_id trait_DEX_ALPHA( "DEX_ALPHA" );
+static const trait_id trait_ECHOLOCATION( "ECHOLOCATION" );
 static const trait_id trait_GASTROPOD_EXTREMITY2( "GASTROPOD_EXTREMITY2" );
 static const trait_id trait_GASTROPOD_EXTREMITY3( "GASTROPOD_EXTREMITY3" );
 static const trait_id trait_GLASSJAW( "GLASSJAW" );
-static const trait_id trait_INT_ALPHA( "INT_ALPHA" );
-static const trait_id trait_INT_SLIME( "INT_SLIME" );
 static const trait_id trait_LONG_TONGUE2( "LONG_TONGUE2" );
 static const trait_id trait_M_BLOOM( "M_BLOOM" );
 static const trait_id trait_M_FERTILE( "M_FERTILE" );
 static const trait_id trait_M_PROVENANCE( "M_PROVENANCE" );
 static const trait_id trait_NAUSEA( "NAUSEA" );
-static const trait_id trait_PER_ALPHA( "PER_ALPHA" );
 static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
 static const trait_id trait_SNAIL_TRAIL( "SNAIL_TRAIL" );
-static const trait_id trait_STR_ALPHA( "STR_ALPHA" );
 static const trait_id trait_TREE_COMMUNION( "TREE_COMMUNION" );
 static const trait_id trait_VOMITOUS( "VOMITOUS" );
 static const trait_id trait_WEB_WEAVER( "WEB_WEAVER" );
@@ -195,6 +195,7 @@ void Character::toggle_trait( const trait_id &trait_, const std::string &var_ )
     if( not_found_in_mutations ) {
         set_mutation( trait, trait->variant( var_ ) );
     } else {
+        get_event_bus().send<event_type::loses_mutation>( getID(), trait );
         unset_mutation( trait );
     }
 }
@@ -458,31 +459,6 @@ void Character::mutation_effect( const trait_id &mut, const bool worn_destroyed_
 {
     if( mut == trait_GLASSJAW ) {
         recalc_hp();
-
-    } else if( mut == trait_STR_ALPHA ) {
-        if( str_max < 16 ) {
-            str_max = 8 + str_max / 2;
-        }
-        apply_mods( mut, true );
-        recalc_hp();
-    } else if( mut == trait_DEX_ALPHA ) {
-        if( dex_max < 16 ) {
-            dex_max = 8 + dex_max / 2;
-        }
-        apply_mods( mut, true );
-    } else if( mut == trait_INT_ALPHA ) {
-        if( int_max < 16 ) {
-            int_max = 8 + int_max / 2;
-        }
-        apply_mods( mut, true );
-    } else if( mut == trait_INT_SLIME ) {
-        int_max *= 2; // Now, can you keep it? :-)
-
-    } else if( mut == trait_PER_ALPHA ) {
-        if( per_max < 16 ) {
-            per_max = 8 + per_max / 2;
-        }
-        apply_mods( mut, true );
     } else {
         apply_mods( mut, true );
     }
@@ -490,10 +466,6 @@ void Character::mutation_effect( const trait_id &mut, const bool worn_destroyed_
     recalculate_size();
 
     const mutation_branch &branch = mut.obj();
-    if( branch.hp_modifier.has_value() || branch.hp_modifier_secondary.has_value() ||
-        branch.hp_adjustment.has_value() ) {
-        recalc_hp();
-    }
 
     for( const itype_id &armor : branch.integrated_armor ) {
         item tmparmor( armor );
@@ -567,31 +539,6 @@ void Character::mutation_loss_effect( const trait_id &mut )
 {
     if( mut == trait_GLASSJAW ) {
         recalc_hp();
-
-    } else if( mut == trait_STR_ALPHA ) {
-        apply_mods( mut, false );
-        if( str_max < 16 ) {
-            str_max = 2 * ( str_max - 8 );
-        }
-        recalc_hp();
-    } else if( mut == trait_DEX_ALPHA ) {
-        apply_mods( mut, false );
-        if( dex_max < 16 ) {
-            dex_max = 2 * ( dex_max - 8 );
-        }
-    } else if( mut == trait_INT_ALPHA ) {
-        apply_mods( mut, false );
-        if( int_max < 16 ) {
-            int_max = 2 * ( int_max - 8 );
-        }
-    } else if( mut == trait_INT_SLIME ) {
-        int_max /= 2; // In case you have a freak accident with the debug menu ;-)
-
-    } else if( mut == trait_PER_ALPHA ) {
-        apply_mods( mut, false );
-        if( per_max < 16 ) {
-            per_max = 2 * ( per_max - 8 );
-        }
     } else {
         apply_mods( mut, false );
     }
@@ -599,10 +546,6 @@ void Character::mutation_loss_effect( const trait_id &mut )
     recalculate_size();
 
     const mutation_branch &branch = mut.obj();
-    if( branch.hp_modifier.has_value() || branch.hp_modifier_secondary.has_value() ||
-        branch.hp_adjustment.has_value() ) {
-        recalc_hp();
-    }
 
     for( const itype_id &popped_armor : branch.integrated_armor ) {
         remove_worn_items_with( [&]( item & armor ) {
@@ -700,16 +643,6 @@ bool Character::is_category_allowed( const mutation_category_id &category ) cons
         allowed = true;
     }
     return allowed;
-}
-
-bool Character::is_weak_to_water() const
-{
-    for( const trait_id &mut : get_mutations() ) {
-        if( mut.obj().weakness_to_water > 0 ) {
-            return true;
-        }
-    }
-    return false;
 }
 
 bool Character::can_use_heal_item( const item &med ) const
@@ -871,13 +804,15 @@ void Character::activate_mutation( const trait_id &mut )
         blossoms();
         tdata.powered = false;
         return;
-    } else if( mut == trait_TREE_COMMUNION ) {
+    } else if( mut == trait_ECHOLOCATION ) {
+        echo_pulse();
+        deactivate_mutation( mut );
+    } else if( mut == trait_TREE_COMMUNION || mut == trait_ARVORE_FOREST_MAPPING ) {
         tdata.powered = false;
         if( !overmap_buffer.ter( global_omt_location() ).obj().is_wooded() ) {
             add_msg_if_player( m_info, _( "You can only do that in a wooded area." ) );
             return;
-        }
-        // Check for adjacent trees.
+        }        // Check for adjacent trees.
         bool adjacent_tree = false;
         map &here = get_map();
         for( const tripoint &p2 : here.points_in_radius( pos(), 1 ) ) {
@@ -885,23 +820,31 @@ void Character::activate_mutation( const trait_id &mut )
                 adjacent_tree = true;
             }
         }
+
         if( !adjacent_tree ) {
             add_msg_if_player( m_info, _( "You can only do that next to a tree." ) );
             return;
         }
 
-        if( has_flag( json_flag_ROOTS2 ) || has_flag( json_flag_ROOTS3 ) ||
-            has_flag( json_flag_CHLOROMORPH ) ) {
+        if( has_flag( json_flag_TREE_COMMUNION_PLUS ) ) {
+            add_msg_if_player( _( "You close your eyes and reach out to the spirits of the forest." ) );
+        } else if( has_flag( json_flag_ROOTS2 ) || has_flag( json_flag_ROOTS3 ) ||
+                   has_flag( json_flag_CHLOROMORPH ) ) {
             add_msg_if_player( _( "You reach out to the trees with your roots." ) );
         } else {
+            set_movement_mode( move_mode_prone );
             add_msg_if_player(
                 _( "You lay next to the trees letting your hair roots tangle with the trees." ) );
         }
 
         assign_activity( ACT_TREE_COMMUNION );
 
-        if( has_flag( json_flag_ROOTS2 ) || has_flag( json_flag_ROOTS3 ) ||
-            has_flag( json_flag_CHLOROMORPH ) ) {
+        if( has_flag( json_flag_TREE_COMMUNION_PLUS ) ) {
+            const time_duration startup_time = rng( 10_minutes, 20_minutes );
+            activity.values.push_back( to_turns<int>( startup_time ) );
+            return;
+        } else if( has_flag( json_flag_ROOTS2 ) || has_flag( json_flag_ROOTS3 ) ||
+                   has_flag( json_flag_CHLOROMORPH ) ) {
             const time_duration startup_time = ( has_flag( json_flag_ROOTS3 ) ||
                                                  has_flag( json_flag_CHLOROMORPH ) ) ? rng( 15_minutes,
                                                          30_minutes ) : rng( 60_minutes, 90_minutes );
@@ -1075,11 +1018,13 @@ void Character::mutate( const int &true_random_chance, bool use_vitamins )
     bool allow_good = false;
     bool allow_bad = false;
     bool allow_neutral = true;
+    bool try_opposite = true;
 
     if( select_mutation ) {
         // Mutation selector overrides good / bad mutation rolls
         allow_good = true;
         allow_bad = true;
+        try_opposite = false;
     } else if( roll_bad_mutation() ) {
         // If we picked bad, mutation can be bad or neutral
         allow_bad = true;
@@ -1098,6 +1043,7 @@ void Character::mutate( const int &true_random_chance, bool use_vitamins )
         allow_good = true; // because i'm WILD YEAH
         allow_bad = true;
         allow_neutral = true;
+        try_opposite = false;
     } else if( cat_list.get_weight() > 0 ) {
         cat = *cat_list.pick();
         cat_list.add_or_replace( cat, 0 );
@@ -1114,6 +1060,7 @@ void Character::mutate( const int &true_random_chance, bool use_vitamins )
         add_msg_debug( debugmode::DF_MUTATION, "mutate: Genetic Downward Spiral found, all bad traits" );
         allow_good = false;
         allow_bad = true;
+        try_opposite = false;
     }
 
     std::vector<trait_id> valid; // Valid mutations
@@ -1236,6 +1183,13 @@ void Character::mutate( const int &true_random_chance, bool use_vitamins )
             }
         }
         if( valid.empty() ) {
+            if( try_opposite && cat_list.get_weight() == 0 ) {
+                // Rebuild cat_list to try opposite in case good or bad mutation candidates are exhausted.
+                try_opposite = false;
+                allow_good = !allow_good;
+                allow_bad = !allow_bad;
+                cat_list = get_vitamin_weighted_categories();
+            }
             if( cat_list.get_weight() > 0 ) {
                 // try to pick again
                 cat = *cat_list.pick();
@@ -1749,6 +1703,7 @@ bool Character::mutate_towards( const trait_id &mut, const mutation_category_id 
             do_interrupt = false;
         }
         get_event_bus().send<event_type::evolves_mutation>( getID(), replace_mdata.id, mdata.id );
+        get_event_bus().send<event_type::loses_mutation>( getID(), replace_mdata.id );
         unset_mutation( replacing );
         mutation_replaced = true;
     }
@@ -1789,6 +1744,7 @@ bool Character::mutate_towards( const trait_id &mut, const mutation_category_id 
             do_interrupt = false;
         }
         get_event_bus().send<event_type::evolves_mutation>( getID(), replace_mdata.id, mdata.id );
+        get_event_bus().send<event_type::loses_mutation>( getID(), replace_mdata.id );
         unset_mutation( replacing2 );
         mutation_replaced = true;
     }
@@ -1817,6 +1773,7 @@ bool Character::mutate_towards( const trait_id &mut, const mutation_category_id 
                                    lost_name );
         }
         get_event_bus().send<event_type::evolves_mutation>( getID(), cancel_mdata.id, mdata.id );
+        get_event_bus().send<event_type::loses_mutation>( getID(), cancel_mdata.id );
         unset_mutation( i );
         mutation_replaced = true;
     }
@@ -2051,6 +2008,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
     }
 
     // This should revert back to a removed base trait rather than simply removing the mutation
+    get_event_bus().send<event_type::loses_mutation>( getID(), mut );
     unset_mutation( mut );
 
     bool mutation_replaced = false;
@@ -2234,6 +2192,7 @@ void Character::test_crossing_threshold( const mutation_category_id &mutation_ca
                                    _( "Something strains mightily for a moment… and then… you're… FREE!" ) );
                 // Thresholds can cancel unpurifiable traits
                 for( const trait_id &canceled : thrdata.cancels ) {
+                    get_event_bus().send<event_type::loses_mutation>( getID(), canceled );
                     unset_mutation( canceled );
                 }
                 set_mutation( mutation_thresh );
@@ -2306,6 +2265,7 @@ void Character::give_all_mutations( const mutation_category_trait &category,
 void Character::unset_all_mutations()
 {
     for( const trait_id &mut : get_mutations() ) {
+        get_event_bus().send<event_type::loses_mutation>( getID(), mut );
         unset_mutation( mut );
     }
 }
@@ -2345,12 +2305,11 @@ void Character::customize_appearance( customize_appearance_choice choice )
                 char_has_trait = true;
             }
 
-            const std::string &entry_name = mutation_name( trait );
+            const std::string has_it = char_has_trait ? " *" : "";
 
             amenu.addentry(
                 i, true, MENU_AUTOASSIGN,
-                char_has_trait ? entry_name + " *" : entry_name
-            );
+                trait->variants.empty() ? mutation_name( trait ) + has_it : trait->name() + has_it );
         }
     };
 
@@ -2396,7 +2355,12 @@ void Character::customize_appearance( customize_appearance_choice choice )
         if( has_trait( current_trait ) ) {
             remove_mutation( current_trait );
         }
-        set_mutation( trait_selected );
+        if( !trait_selected->variants.empty() ) {
+            const mutation_variant *variant = trait_selected->pick_variant_menu();
+            set_mutation( trait_selected, variant );
+        } else {
+            set_mutation( trait_selected );
+        }
         if( one_in( 3 ) ) {
             add_msg( m_neutral, end_message );
         }
@@ -2418,4 +2382,3 @@ std::string Character::visible_mutations( const int visibility_cap ) const
         return std::string();
     } );
 }
-

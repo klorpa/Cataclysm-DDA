@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -29,10 +28,9 @@
 #include "enums.h"
 #include "faction.h"
 #include "faction_camp.h"
-#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
-#include "input.h"
+#include "input_context.h"
 #include "inventory.h"
 #include "item.h"
 #include "item_group.h"
@@ -152,6 +150,7 @@ std::string enum_to_string<mission_kind>( mission_kind data )
         case mission_kind::Caravan_Commune_Center_Job: return "Caravan_Commune_Center_Job";
         case mission_kind::Camp_Distribute_Food: return "Camp_Distribute_Food";
 		case mission_kind::Camp_Determine_Leadership: return "Camp_Determine_Leadership";
+		case mission_kind::Camp_Have_Meal: return "Camp_Have_Meal";
         case mission_kind::Camp_Hide_Mission: return "Camp_Hide_Mission";
         case mission_kind::Camp_Reveal_Mission: return "Camp_Reveal_Mission";
         case mission_kind::Camp_Assign_Jobs: return "Camp_Assign_Jobs";
@@ -163,6 +162,7 @@ std::string enum_to_string<mission_kind>( mission_kind data )
         case mission_kind::Camp_Gather_Materials: return "Camp_Gather_Materials";
         case mission_kind::Camp_Collect_Firewood: return "Camp_Collect_Firewood";
         case mission_kind::Camp_Menial: return "Camp_Menial";
+        case mission_kind::Camp_Survey_Field: return "Camp_Survey_Field";
         case mission_kind::Camp_Survey_Expansion: return "Camp_Survey_Expansion";
         case mission_kind::Camp_Cut_Logs: return "Camp_Cut_Logs";
         case mission_kind::Camp_Clearcut: return "Camp_Clearcut";
@@ -232,6 +232,10 @@ static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
             no_translation( "" )
         },
         {
+            "Camp_Have_Meal",
+            no_translation( "" )
+        },
+        {
             "Hide_Mission",
             no_translation( "" )
         },
@@ -274,6 +278,10 @@ static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
         {
             "Camp_Menial",
             to_translation( "Performing menial labor…\n" )
+        },
+        {
+            "Camp_Survey_Field",
+            to_translation( "Surveying for suitable fields…\n" )
         },
         {
             "Camp_Survey_Expansion",
@@ -447,6 +455,9 @@ void mission_id::deserialize( const JsonValue &val )
             dir = base_camps::base_dir;
         } else if( str == "_faction_camp_menial" ) {
             id = Camp_Menial;
+            dir = base_camps::base_dir;
+        } else if( str == "_faction_camp_field" ) {
+            id = Camp_Survey_Field;
             dir = base_camps::base_dir;
         } else if( str == "_faction_camp_expansion" ) {
             id = Camp_Survey_Expansion;
@@ -1204,6 +1215,7 @@ bool talk_function::handle_outpost_mission( const mission_entry &cur_key, npc &p
 
         case Camp_Distribute_Food:
         case Camp_Determine_Leadership:
+        case Camp_Have_Meal:
         case Camp_Hide_Mission:
         case Camp_Reveal_Mission:
         case Camp_Assign_Jobs:
@@ -1215,6 +1227,7 @@ bool talk_function::handle_outpost_mission( const mission_entry &cur_key, npc &p
         case Camp_Gather_Materials:
         case Camp_Collect_Firewood:
         case Camp_Menial:
+        case Camp_Survey_Field:
         case Camp_Survey_Expansion:
         case Camp_Cut_Logs:
         case Camp_Clearcut:
@@ -1500,9 +1513,9 @@ void talk_function::field_plant( npc &p, const std::string &place )
         popup( _( "It is too cold to plant anything now." ) );
         return;
     }
-    std::vector<item *> seed_inv = player_character.items_with( []( const item & itm ) {
-        return itm.is_seed() && itm.typeId() != itype_marloss_seed &&
-               itm.typeId() != itype_fungal_seeds;
+    std::vector<item *> seed_inv = player_character.cache_get_items_with( "is_seed", &item::is_seed,
+    []( const item & itm ) {
+        return itm.typeId() != itype_marloss_seed && itm.typeId() != itype_fungal_seeds;
     } );
     if( seed_inv.empty() ) {
         popup( _( "You have no seeds to plant!" ) );
@@ -1539,7 +1552,7 @@ void talk_function::field_plant( npc &p, const std::string &place )
     const tripoint_abs_omt site = overmap_buffer.find_closest(
                                       player_character.global_omt_location(), place, 20, false );
     tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
+    bay.load( site, false );
     for( const tripoint &plot : bay.points_on_zlevel() ) {
         if( bay.ter( plot ) == t_dirtmound ) {
             empty_plots++;
@@ -1611,7 +1624,7 @@ void talk_function::field_harvest( npc &p, const std::string &place )
     std::vector<itype_id> seed_types;
     std::vector<itype_id> plant_types;
     std::vector<std::string> plant_names;
-    bay.load( project_to<coords::sm>( site ), false );
+    bay.load( site, false );
     for( const tripoint &plot : bay.points_on_zlevel() ) {
         map_stack items = bay.i_at( plot );
         if( bay.furn( plot ) == furn_f_plant_harvest && !items.empty() ) {
@@ -2044,7 +2057,7 @@ bool talk_function::carpenter_return( npc &p )
         ///\EFFECT_DODGE_NPC affects carpenter mission results
 
         ///\EFFECT_SURVIVAL_NPC affects carpenter mission results
-        int skill_1 = comp->get_skill_level( skill_fabrication );
+        int skill_1 = comp->get_greater_skill_or_knowledge_level( skill_fabrication );
         int skill_2 = comp->get_skill_level( skill_dodge );
         int skill_3 = comp->get_skill_level( skill_survival );
         popup( _( "While %s was framing a building, one of the walls began to collapse…" ),
@@ -2195,7 +2208,7 @@ bool talk_function::companion_om_combat_check( const std::vector<npc_ptr> &group
     tripoint_abs_sm sm_tgt = project_to<coords::sm>( om_tgt );
 
     tinymap target_bay;
-    target_bay.load( sm_tgt, false );
+    target_bay.load( om_tgt, false );
     std::vector< monster * > monsters_around;
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
@@ -2754,7 +2767,7 @@ std::set<item> talk_function::loot_building( const tripoint_abs_omt &site,
         const oter_str_id &looted_replacement )
 {
     tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
+    bay.load( site, false );
     creature_tracker &creatures = get_creature_tracker();
     std::set<item> return_items;
     for( const tripoint &p : bay.points_on_zlevel() ) {

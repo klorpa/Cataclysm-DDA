@@ -26,7 +26,7 @@
         "u_has_trait": "PROF_HUB01_ANCILLIARY",
         "yes": [
           "Hey oh umm.  Yes, Sir?",
-          "&The mercenary looks noticeably tense as you approach.",
+          { "gendered_line": "&The mercenary looks noticeably tense as you approach.", "relevant_genders": [ "npc" ] },
           "Nothing to report, Sir!",
           "Hey boss."
         ],
@@ -52,7 +52,7 @@
               "Please head right down, scavenger.",
               "Are you here to do anything?"
             ],
-            "no": "If you are looking for the Terminal, its first basement, right up the stairs and to the left."
+            "no": "If you are looking for the Terminal, it's in the first basement, right down the stairs and to the left."
           }
         }
       }
