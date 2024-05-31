@@ -53,10 +53,16 @@ enum class mod : int {
     REGEN_HP_AWAKE,
     HUNGER,        // hunger rate
     THIRST,        // thirst rate
-    FATIGUE,       // fatigue rate
-    FATIGUE_REGEN,
+    SLEEPINESS,       // sleepiness rate
+    SLEEPINESS_REGEN,
     PAIN,
     PAIN_REMOVE,
+    PAIN_PENALTY_MOD_STR,
+    PAIN_PENALTY_MOD_DEX,
+    PAIN_PENALTY_MOD_INT,
+    PAIN_PENALTY_MOD_PER,
+    PAIN_PENALTY_MOD_SPEED,
+    DODGE_CHANCE,
     BONUS_DODGE,
     BONUS_BLOCK,
     MELEE_DAMAGE,
@@ -139,6 +145,7 @@ enum class mod : int {
     ITEM_ARMOR_ACID,
     ITEM_ARMOR_BIO,
     ITEM_ATTACK_SPEED,
+    EQUIPMENT_DAMAGE_CHANCE,
     CLIMATE_CONTROL_HEAT,
     CLIMATE_CONTROL_CHILL,
     COMBAT_CATCHUP,
@@ -165,6 +172,7 @@ enum class mod : int {
     CONSUME_TIME_MOD,
     SWEAT_MULTIPLIER,
     STAMINA_REGEN_MOD,
+    MOVEMENT_EXERTION_MODIFIER,
     NUM_MOD
 };
 } // namespace enchant_vals
@@ -284,6 +292,7 @@ class enchant_cache : public enchantment
         time_duration modify_value( enchant_vals::mod mod_val, time_duration value ) const;
         // adds two enchantments together and ignores their conditions
         void force_add( const enchantment &rhs, const Character &guy );
+        void force_add( const enchantment &rhs, const monster &mon );
         void force_add( const enchantment &rhs );
         void force_add( const enchant_cache &rhs );
 
